@@ -404,23 +404,25 @@ function HomeContent() {
               )}
 
               {status === 'abgelehnt' && (
-                <div className="mb-32">
-                  <label className="block text-sm font-medium text-gray-700 mb-4">
-                    Begründung für die Ablehnung
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <textarea
-                    value={kommentar}
-                    onChange={(e) => {
-                      setKommentar(e.target.value);
-                      setValidationErrors({ ...validationErrors, kommentar: false });
-                    }}
-                    className={`w-full h-32 px-4 py-3 bg-gray-50 border ${validationErrors.kommentar ? 'border-red-500' : 'border-gray-200'} rounded-[8px] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-blue-500/50 resize-none text-[15px]`}
-                    placeholder="Bitte geben Sie einen Grund für die Ablehnung an"
-                  />
-                  {validationErrors.kommentar && (
-                    <ValidationMessage message="Pflichtfeld: Bitte geben Sie eine Begründung ein" />
-                  )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ marginBottom: '16px' }}>
+                    <label className="block text-sm font-medium text-gray-700 mb-4">
+                      Begründung für die Ablehnung
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <textarea
+                      value={kommentar}
+                      onChange={(e) => {
+                        setKommentar(e.target.value);
+                        setValidationErrors({ ...validationErrors, kommentar: false });
+                      }}
+                      className={`w-full h-32 px-4 py-3 bg-gray-50 border ${validationErrors.kommentar ? 'border-red-500' : 'border-gray-200'} rounded-[8px] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-blue-500/50 resize-none text-[15px]`}
+                      placeholder="Bitte geben Sie einen Grund für die Ablehnung an"
+                    />
+                    {validationErrors.kommentar && (
+                      <ValidationMessage message="Pflichtfeld: Bitte geben Sie eine Begründung ein" />
+                    )}
+                  </div>
                 </div>
               )}
             </div>
