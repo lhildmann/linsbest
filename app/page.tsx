@@ -68,7 +68,17 @@ export default function Home() {
 
 function HomeContent() {
   const searchParams = useSearchParams();
-  const bestellnummer = searchParams.get('OrderID');
+
+  // Normalize query parameters to be case-insensitive
+  const queryParams = new URLSearchParams(searchParams.toString());
+  let bestellnummer = null;
+
+  for (const [key, value] of queryParams.entries()) {
+    if (key.toLowerCase() === 'orderid') {
+      bestellnummer = value;
+      break;
+    }
+  }
 
   const [status, setStatus] = useState<FormStatus>('ausgeführt');
   const [alternativeLinse1, setAlternativeLinse1] = useState('');
