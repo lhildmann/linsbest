@@ -88,11 +88,7 @@ function HomeContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errors = validateForm();
-    if (Object.keys(errors).length > 0) {
-      setValidationErrors(errors);
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       const formData = {
@@ -118,36 +114,40 @@ function HomeContent() {
 
       const result = await response.json();
       
+      if (!response.ok) {
+        throw new Error(result.message || 'Fehler beim Speichern der Daten');
+      }
+
       if (result.success) {
-        // Erstelle eine formatierte Nachricht mit den gespeicherten Informationen
-        let message = '✅ Formular erfolgreich gesendet\n\n';
-        message += 'Gespeicherte Informationen:\n';
+        let message = `Bestellung erfolgreich gespeichert!\n\n`;
         message += `OrderID: ${bestellnummer}\n`;
         message += `Status: ${status}\n`;
-        
-        if (status === 'ausgeführt' && lieferdatum1) {
-          message += `Lieferdatum: ${new Date(lieferdatum1).toLocaleDateString('de-DE')}\n`;
-        }
-        
-        if (status === 'alternative') {
+
+        if (status === 'ausgeführt') {
+          message += `Lieferdatum: ${lieferdatum1 ? new Date(lieferdatum1).toLocaleDateString('de-DE') : 'Nicht angegeben'}\n`;
+        } else if (status === 'alternative') {
           message += '\nAlternative Linsen:\n';
-          if (alternativeLinse1) message += `1. ${alternativeLinse1} (${new Date(lieferdatum1!).toLocaleDateString('de-DE')})\n`;
-          if (alternativeLinse2) message += `2. ${alternativeLinse2} (${new Date(lieferdatum2!).toLocaleDateString('de-DE')})\n`;
-          if (alternativeLinse3) message += `3. ${alternativeLinse3} (${new Date(lieferdatum3!).toLocaleDateString('de-DE')})\n`;
+          if (alternativeLinse1) {
+            message += `- ${alternativeLinse1} (Lieferdatum: ${lieferdatum1 ? new Date(lieferdatum1).toLocaleDateString('de-DE') : 'Nicht angegeben'})\n`;
+          }
+          if (alternativeLinse2) {
+            message += `- ${alternativeLinse2} (Lieferdatum: ${lieferdatum2 ? new Date(lieferdatum2).toLocaleDateString('de-DE') : 'Nicht angegeben'})\n`;
+          }
+          if (alternativeLinse3) {
+            message += `- ${alternativeLinse3} (Lieferdatum: ${lieferdatum3 ? new Date(lieferdatum3).toLocaleDateString('de-DE') : 'Nicht angegeben'})\n`;
+          }
+        } else if (status === 'abgelehnt') {
+          message += `Kommentar: ${kommentar || 'Kein Kommentar'}\n`;
         }
-        
-        if (status === 'abgelehnt' && kommentar) {
-          message += `\nBegründung: ${kommentar}\n`;
-        }
-        
+
         alert(message);
         resetForm();
       } else {
-        throw new Error(result.message);
+        throw new Error(result.message || 'Fehler beim Speichern der Daten');
       }
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
-      alert('Fehler beim Speichern der Daten. Bitte versuchen Sie es erneut.');
+      console.error('Error in handleSubmit:', error);
+      alert(error instanceof Error ? error.message : 'Fehler beim Speichern der Daten. Bitte versuchen Sie es erneut.');
     }
   };
 
@@ -280,7 +280,8 @@ function HomeContent() {
       errors.kommentar = true;
     }
 
-    return errors;
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const resetForm = () => {
@@ -332,26 +333,28 @@ function HomeContent() {
 
             <div>
               {status === 'ausgeführt' && (
-                <div className="mb-32">
-                  <label className="block text-sm font-medium text-gray-700 mb-4">
-                    Voraussichtliches Lieferdatum
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <DatePicker
-                    selected={lieferdatum1}
-                    onChange={(date) => {
-                      setLieferdatum1(date);
-                      setValidationErrors({ ...validationErrors, lieferdatum1: false });
-                    }}
-                    dateFormat="dd.MM.yyyy"
-                    locale={de}
-                    className={`w-full h-[44px] px-4 bg-gray-50 border ${validationErrors.lieferdatum1 ? 'border-red-500' : 'border-gray-200'} rounded-[8px] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-blue-500/50 text-[15px]`}
-                    placeholderText="TT.MM.JJJJ"
-                    required
-                  />
-                  {validationErrors.lieferdatum1 && (
-                    <ValidationMessage message="Pflichtfeld: Bitte geben Sie ein Datum ein" />
-                  )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ marginBottom: '16px' }}>
+                    <label className="block text-sm font-medium text-gray-700 mb-4">
+                      Voraussichtliches Lieferdatum
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <DatePicker
+                      selected={lieferdatum1}
+                      onChange={(date) => {
+                        setLieferdatum1(date);
+                        setValidationErrors({ ...validationErrors, lieferdatum1: false });
+                      }}
+                      dateFormat="dd.MM.yyyy"
+                      locale={de}
+                      className={`w-full h-[44px] px-4 bg-gray-50 border ${validationErrors.lieferdatum1 ? 'border-red-500' : 'border-gray-200'} rounded-[8px] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:border-blue-500/50 text-[15px]`}
+                      placeholderText="TT.MM.JJJJ"
+                      required
+                    />
+                    {validationErrors.lieferdatum1 && (
+                      <ValidationMessage message="Pflichtfeld: Bitte geben Sie ein Datum ein" />
+                    )}
+                  </div>
                 </div>
               )}
 
