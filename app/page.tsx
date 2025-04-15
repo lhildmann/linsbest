@@ -95,23 +95,32 @@ function HomeContent() {
     }
 
     try {
-      const csvContent = createCSV({
-        OrderID: bestellnummer,
+      const formData = {
+        orderId: bestellnummer,
         status,
-        lieferdatum: status === 'ausgeführt' && lieferdatum1 ? new Date(lieferdatum1).toLocaleDateString('de-DE') : undefined,
-        alternativeLinse1: status === 'alternative' ? alternativeLinse1 : undefined,
-        lieferdatum1: status === 'alternative' && lieferdatum1 ? new Date(lieferdatum1).toLocaleDateString('de-DE') : undefined,
-        alternativeLinse2: status === 'alternative' && alternativeLinse2.trim() ? alternativeLinse2 : undefined,
-        lieferdatum2: status === 'alternative' && lieferdatum2 ? new Date(lieferdatum2).toLocaleDateString('de-DE') : undefined,
-        alternativeLinse3: status === 'alternative' && alternativeLinse3.trim() ? alternativeLinse3 : undefined,
-        lieferdatum3: status === 'alternative' && lieferdatum3 ? new Date(lieferdatum3).toLocaleDateString('de-DE') : undefined,
-        kommentar: status === 'abgelehnt' ? kommentar : undefined,
+        lieferdatum: status === 'ausgeführt' && lieferdatum1 ? new Date(lieferdatum1).toISOString() : null,
+        alternativeLinse1: status === 'alternative' ? alternativeLinse1 : null,
+        lieferdatum1: status === 'alternative' && lieferdatum1 ? new Date(lieferdatum1).toISOString() : null,
+        alternativeLinse2: status === 'alternative' && alternativeLinse2.trim() ? alternativeLinse2 : null,
+        lieferdatum2: status === 'alternative' && lieferdatum2 ? new Date(lieferdatum2).toISOString() : null,
+        alternativeLinse3: status === 'alternative' && alternativeLinse3.trim() ? alternativeLinse3 : null,
+        lieferdatum3: status === 'alternative' && lieferdatum3 ? new Date(lieferdatum3).toISOString() : null,
+        kommentar: status === 'abgelehnt' ? kommentar : null
+      };
+
+      const response = await fetch('/api/save-csv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
-      const result = await saveCSV(csvContent, bestellnummer);
+
+      const result = await response.json();
       
       if (result.success) {
         // Erstelle eine formatierte Nachricht mit den gespeicherten Informationen
-        let message = '✅ Formular erfolgreich gesendet und CSV-Datei gespeichert\n\n';
+        let message = '✅ Formular erfolgreich gesendet\n\n';
         message += 'Gespeicherte Informationen:\n';
         message += `OrderID: ${bestellnummer}\n`;
         message += `Status: ${status}\n`;
