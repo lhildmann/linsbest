@@ -126,7 +126,8 @@ export async function POST(request: Request) {
 
     // Create CSV content
     const csvContent = createCSV(data);
-    const fileName = `Linsenbestellung_${data.orderId}_${new Date().toISOString().split('T')[0]}.csv`;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `Linsenbestellung_${data.orderId}_${timestamp}.csv`;
 
     // Upload to Zoho WorkDrive
     try {
