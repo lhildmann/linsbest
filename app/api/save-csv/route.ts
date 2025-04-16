@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 
 interface FormData {
   orderId: string | null;
@@ -15,10 +13,69 @@ interface FormData {
   kommentar: string | null;
 }
 
-// Funktion zum Erstellen der CSV-Datei
+// Function to get Zoho access token
+async function getZohoAccessToken() {
+  try {
+    const tokenResponse = await fetch('https://accounts.zoho.eu/oauth/v2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: process.env.ZOHO_CLIENT_ID || '',
+        client_secret: process.env.ZOHO_CLIENT_SECRET || '',
+        refresh_token: process.env.ZOHO_REFRESH_TOKEN || '',
+        grant_type: 'refresh_token',
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to get access token');
+    }
+
+    const tokenData = await tokenResponse.json();
+    return tokenData.access_token;
+  } catch (error) {
+    console.error('Error getting Zoho access token:', error);
+    throw error;
+  }
+}
+
+// Function to upload file to Zoho WorkDrive
+async function uploadToZohoWorkDrive(fileName: string, fileContent: string) {
+  try {
+    const accessToken = await getZohoAccessToken();
+    
+    // Create form data with the file
+    const formData = new FormData();
+    const blob = new Blob([fileContent], { type: 'text/csv' });
+    formData.append('content', blob, fileName);
+    formData.append('parent_id', process.env.ZOHO_WORKDRIVE_FOLDER_ID || '');
+
+    // Upload to Zoho WorkDrive
+    const uploadResponse = await fetch('https://www.zohoapis.eu/workdrive/api/v1/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Zoho-oauthtoken ${accessToken}`,
+      },
+      body: formData,
+    });
+
+    if (!uploadResponse.ok) {
+      const errorData = await uploadResponse.json();
+      throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
+    }
+
+    return await uploadResponse.json();
+  } catch (error) {
+    console.error('Error uploading to Zoho WorkDrive:', error);
+    throw error;
+  }
+}
+
+// Function to create CSV content
 const createCSV = (data: FormData) => {
   try {
-    // Filtern der null Werte und Konvertierung der Daten
     const filteredData: Record<string, string> = {};
     
     if (data.orderId) filteredData.OrderID = data.orderId;
@@ -67,31 +124,26 @@ export async function POST(request: Request) {
       );
     }
 
+    // Create CSV content
     const csvContent = createCSV(data);
-    console.log('Generated CSV content:', csvContent);
-
     const fileName = `Linsenbestellung_${data.orderId}_${new Date().toISOString().split('T')[0]}.csv`;
-    const uploadsDir = path.join(process.cwd(), 'uploads');
-    console.log('Upload directory:', uploadsDir);
 
-    // Ensure uploads directory exists
+    // Upload to Zoho WorkDrive
     try {
-      if (!fs.existsSync(uploadsDir)) {
-        console.log('Creating uploads directory');
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-
-      const filePath = path.join(uploadsDir, fileName);
-      console.log('Saving file to:', filePath);
-      
-      fs.writeFileSync(filePath, csvContent);
-      console.log('File saved successfully');
-
-      return NextResponse.json({ success: true });
+      const uploadResult = await uploadToZohoWorkDrive(fileName, csvContent);
+      return NextResponse.json({ 
+        success: true,
+        message: 'Datei erfolgreich in Zoho WorkDrive hochgeladen',
+        fileDetails: uploadResult
+      });
     } catch (error) {
-      console.error('Error in file operations:', error);
+      console.error('Error uploading to Zoho WorkDrive:', error);
       return NextResponse.json(
-        { success: false, message: 'Fehler beim Speichern der Datei' },
+        { 
+          success: false, 
+          message: 'Fehler beim Hochladen der Datei zu Zoho WorkDrive',
+          error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+        },
         { status: 500 }
       );
     }
