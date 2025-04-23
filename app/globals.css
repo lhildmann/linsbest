@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  
+  body {
+    @apply bg-white text-gray-800;
+  }
+
+  input, select, textarea {
+    @apply bg-white border border-gray-300 rounded text-sm;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    transition: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    @apply outline-none ring-1 ring-blue-500 border-blue-500;
+    box-shadow: none;
+    transition: none;
+  }
+
+  input[type="text"] {
+    @apply px-3 py-2;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+
+  input[type="text"]:focus {
+    @apply outline-none ring-1 ring-blue-500 border-blue-500;
+    box-shadow: none;
+    transition: none;
+  }
+
+  label {
+    @apply block text-sm font-medium text-gray-700;
+  }
+
+  button {
+    @apply transition-colors duration-200;
+  }
+}
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: Arial, Helvetica, sans-serif;
+} 
